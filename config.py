@@ -50,3 +50,6 @@ verbose = True
 grad_map_viz = False
 hide_tqdm_bar = True
 save_model = True
+
+#convolution
+subnet_conv_dim = 256

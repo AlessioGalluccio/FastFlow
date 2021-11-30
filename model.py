@@ -10,8 +10,14 @@ import config as c
 from freia_funcs import permute_layer, glow_coupling_layer, F_fully_connected, ReversibleGraphNet, OutputNode, \
     InputNode, Node
 
+
 WEIGHT_DIR = './weights'
 MODEL_DIR = './models'
+
+def subnet_conv(c_in, c_out, kernel_size):
+    return nn.Sequential(nn.Conv2d(c_in, c.subnet_conv_dim,   kernel_size=(kernel_size,kernel_size), padding='same'),
+                         nn.ReLU(),
+                         nn.Conv2d(c.subnet_conv_dim,  c_out, kernel_size=(kernel_size,kernel_size), padding='same'))
 
 
 def nf_head(input_dim=c.n_feat):
@@ -27,6 +33,19 @@ def nf_head(input_dim=c.n_feat):
     coder = ReversibleGraphNet(nodes)
     return coder
 
+def nf_fast_flow(input_dim):
+    nodes = list()
+    nodes.append(InputNode(input_dim, name='input'))
+    for k in range(c.n_coupling_blocks):
+        nodes.append(Node([nodes[-1].out0], permute_layer, {'seed': k}, name=F'permute_{k}')) # non va bene, deve permutare solo i channels
+        nodes.append(Node([nodes[-1].out0], glow_coupling_layer,
+                          {'clamp': c.clamp_alpha, 'F_class': subnet_conv,
+                           'F_args': {'c_in': 96, 'c_out': 96, 'kernel_size': 1}},
+                          name=F'conv_{k}'))
+    nodes.append(OutputNode([nodes[-1].out0], name='output'))
+    coder = ReversibleGraphNet(nodes)
+    return coder
+
 
 class FastFlow(nn.Module):
     def __init__(self):
@@ -38,7 +57,7 @@ class FastFlow(nn.Module):
         print(summary(self.feature_extractor, (3,224,224)))
         #self.feature_extractor = torch.load('./pretrained/M48_448.pth') #sbagliato, carica solo i pesi, non il modello
         #self.feature_extractor.eval() # to deactivate the dropout layers
-        self.nf = nf_head()
+        self.nf = nf_fast_flow((96,196,768))
 
     def forward(self, x):
         y_cat = list()

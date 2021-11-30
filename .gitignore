@@ -3,3 +3,6 @@
 /models/alexnet/hub/
 /models/
 /weights/
+/dummy_dataset/
+/pretrained/
+/mtd_train_filenames.txt
