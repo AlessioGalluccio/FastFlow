@@ -93,9 +93,9 @@ class FastFlow(nn.Module):
         feat_s = self.feature_extractor(x)
         #y_cat.append(feat_s)
         #y = torch.cat(y_cat, dim=3)
-        print(feat_s)
-        z = self.nf(feat_s)
-        return z
+        #print(feat_s)
+        z, log_jac_det = self.nf(feat_s)
+        return z, log_jac_det
 
 
 

@@ -72,7 +72,7 @@ def train(train_loader, test_loader):
         model.train()
         if c.verbose:
             print(F'\nTrain epoch {epoch}')
-        for sub_epoch in range(c.sub_epochs):
+        for sub_epoch in range(c.sub_epochs-7):
             train_loss = list()
             for i, data in enumerate(tqdm(train_loader, disable=c.hide_tqdm_bar)):
                 optimizer.zero_grad()
@@ -102,9 +102,9 @@ def train(train_loader, test_loader):
         with torch.no_grad():
             for i, data in enumerate(tqdm(test_loader, disable=c.hide_tqdm_bar)):
                 inputs, labels = preprocess_batch(data)
-                z = model(inputs)
+                z, log_jac_det = model(inputs)
                 # Why do I compute the loss also for defective images, which will have great loss values?
-                loss = get_loss(z, model.nf.jacobian(run_forward=False))
+                loss = get_loss(z, log_jac_det)
                 test_z.append(z)
                 test_loss.append(t2np(loss))
                 test_labels.append(t2np(labels))

@@ -26,7 +26,7 @@ transf_saturation = 0.0
 norm_mean, norm_std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
 
 # network hyperparameters
-n_scales = 3 # number of scales at which features are extracted, img_size is the highest - others are //2, //4,...
+n_scales = 1 # number of scales at which features are extracted, img_size is the highest - others are //2, //4,...
 clamp_alpha = 3 # see paper equation 2 for explanation
 n_coupling_blocks = 4
 fc_internal = 2048 # number of neurons in hidden layers of s-t-networks
@@ -48,8 +48,8 @@ sub_epochs = 8
 # output settings
 verbose = True
 grad_map_viz = False
-hide_tqdm_bar = True
+hide_tqdm_bar = False
 save_model = True
 
 #convolution
-subnet_conv_dim = 256
+subnet_conv_dim = 128
