@@ -9,7 +9,7 @@ from torchsummary import summary
 import config as c
 from freia_funcs import permute_layer, glow_coupling_layer, F_fully_connected, ReversibleGraphNet, OutputNode, \
     InputNode, Node
-
+import FrEIA.FrEIA.modules as Fm
 
 WEIGHT_DIR = './weights'
 MODEL_DIR = './models'
@@ -37,7 +37,7 @@ def nf_fast_flow(input_dim):
     nodes = list()
     nodes.append(InputNode(input_dim, name='input'))
     for k in range(c.n_coupling_blocks):
-        nodes.append(Node([nodes[-1].out0], permute_layer, {'seed': k}, name=F'permute_{k}')) # non va bene, deve permutare solo i channels
+        nodes.append(Node([nodes[-1].out0], Fm.PermuteRandom, {'seed': k}, name=F'permute_{k}')) # non va bene, deve permutare solo i channels
         nodes.append(Node([nodes[-1].out0], glow_coupling_layer,
                           {'clamp': c.clamp_alpha, 'F_class': subnet_conv,
                            'F_args': {'c_in': 96, 'c_out': 96, 'kernel_size': 1}},
