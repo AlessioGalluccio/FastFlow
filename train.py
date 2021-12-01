@@ -80,8 +80,8 @@ def train(train_loader, test_loader):
                 # TODO inspect
                 # inputs += torch.randn(*inputs.shape).cuda() * c.add_img_noise
 
-                z = model(inputs)
-                loss = get_loss(z, model.nf.jacobian(run_forward=False))
+                z, log_jac_det = model(inputs)
+                loss = get_loss(z, log_jac_det)
                 train_loss.append(t2np(loss))
                 loss.backward()
                 optimizer.step()

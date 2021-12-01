@@ -9,10 +9,17 @@ from freia_funcs import permute_layer, glow_coupling_layer, F_fully_connected, R
 import FrEIA.modules as Fm
 import FrEIA.framework as Ff
 
+import torchvision.models as models
+
 WEIGHT_DIR = './weights'
 MODEL_DIR = './models'
 
-def subnet_conv(c_in, c_out, kernel_size=1):
+def subnet_conv_1(c_in, c_out, kernel_size=1):
+    return nn.Sequential(nn.Conv2d(c_in, c.subnet_conv_dim,   kernel_size=(kernel_size,kernel_size), padding='same'),
+                         nn.ReLU(),
+                         nn.Conv2d(c.subnet_conv_dim,  c_out, kernel_size=(kernel_size,kernel_size), padding='same'))
+
+def subnet_conv_3(c_in, c_out, kernel_size=3):
     return nn.Sequential(nn.Conv2d(c_in, c.subnet_conv_dim,   kernel_size=(kernel_size,kernel_size), padding='same'),
                          nn.ReLU(),
                          nn.Conv2d(c.subnet_conv_dim,  c_out, kernel_size=(kernel_size,kernel_size), padding='same'))
@@ -40,10 +47,16 @@ def nf_fast_flow(input_dim):
                              Fm.PermuteRandom,
                              {'seed':k},
                              name=F'permute_high_res_{k}'))
-        nodes.append(Ff.Node(nodes[-1],
-                             Fm.GLOWCouplingBlock,
-                             {'subnet_constructor':subnet_conv, 'clamp':1.2},
-                             name=F'conv_high_res_{k}'))
+        if k % 2 == 0:
+            nodes.append(Ff.Node(nodes[-1],
+                                 Fm.GLOWCouplingBlock,
+                                 {'subnet_constructor':subnet_conv_3, 'clamp':1.2},
+                                 name=F'conv_high_res_{k}'))
+        else:
+            nodes.append(Ff.Node(nodes[-1],
+                                 Fm.GLOWCouplingBlock,
+                                 {'subnet_constructor':subnet_conv_1, 'clamp':1.2},
+                                 name=F'conv_high_res_{k}'))
 
     nodes.append(Ff.OutputNode(nodes[-1], name='output'))
     print(nodes)
@@ -55,14 +68,17 @@ def nf_fast_flow(input_dim):
 class FastFlow(nn.Module):
     def __init__(self):
         super(FastFlow, self).__init__()
-        #self.feature_extractor = alexnet(pretrained=True)
-        self.feature_extractor = torch.hub.load('facebookresearch/deit:main', 'deit_base_distilled_patch16_224', pretrained=True)
-        self.feature_extractor = torch.nn.Sequential(*(list(self.feature_extractor.children())[:-2])) # I remove the last two layers
+
+        #self.feature_extractor = torch.hub.load('facebookresearch/deit:main', 'deit_base_distilled_patch16_224', pretrained=True)
+        #self.feature_extractor = torch.nn.Sequential(*(list(self.feature_extractor.children())[:-2])) # I remove the last two layers
+
+        self.feature_extractor = models.resnet18()
+        self.feature_extractor = torch.nn.Sequential(*(list(self.feature_extractor.children())[:5]))
 
         print(summary(self.feature_extractor, (3,224,224)))
         #self.feature_extractor = torch.load('./pretrained/M48_448.pth') #sbagliato, carica solo i pesi, non il modello
         #self.feature_extractor.eval() # to deactivate the dropout layers
-        self.nf = nf_fast_flow((96,196,768))
+        self.nf = nf_fast_flow((64,56,56))
 
     def forward(self, x):
         y_cat = list()
