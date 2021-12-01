@@ -72,7 +72,7 @@ def train(train_loader, test_loader):
         model.train()
         if c.verbose:
             print(F'\nTrain epoch {epoch}')
-        for sub_epoch in range(c.sub_epochs-7):
+        for sub_epoch in range(c.sub_epochs):
             train_loss = list()
             for i, data in enumerate(tqdm(train_loader, disable=c.hide_tqdm_bar)):
                 optimizer.zero_grad()
