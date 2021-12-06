@@ -11,20 +11,22 @@ import FrEIA.framework as Ff
 
 import torchvision.models as models
 
+import numpy as np
+
 WEIGHT_DIR = './weights'
 MODEL_DIR = './models'
 
-def subnet_conv_1(c_in, c_out, kernel_size=1):
-    return nn.Sequential(nn.Conv2d(c_in, c.subnet_conv_dim,   kernel_size=(kernel_size,kernel_size), padding='same'),
+def subnet_conv_1(c_in, c_out):
+    return nn.Sequential(nn.Conv2d(c_in, c.subnet_conv_dim,   kernel_size=(1,1), padding='same'),
                          nn.ReLU(),
-                         nn.Conv2d(c.subnet_conv_dim,  c_out, kernel_size=(kernel_size,kernel_size), padding='same'))
+                         nn.Conv2d(c.subnet_conv_dim,  c_out, kernel_size=(1,1), padding='same'))
 
-def subnet_conv_3(c_in, c_out, kernel_size=3):
-    return nn.Sequential(nn.Conv2d(c_in, c.subnet_conv_dim,   kernel_size=(kernel_size,kernel_size), padding='same'),
+def subnet_conv_3(c_in, c_out):
+    return nn.Sequential(nn.Conv2d(c_in, c.subnet_conv_dim,   kernel_size=(3,3), padding='same'),
                          nn.ReLU(),
-                         nn.Conv2d(c.subnet_conv_dim,  c_out, kernel_size=(kernel_size,kernel_size), padding='same'))
+                         nn.Conv2d(c.subnet_conv_dim,  c_out, kernel_size=(3,3), padding='same'))
 
-
+'''
 def nf_head(input_dim=c.n_feat):
     nodes = list()
     nodes.append(InputNode(input_dim, name='input'))
@@ -37,11 +39,13 @@ def nf_head(input_dim=c.n_feat):
     nodes.append(OutputNode([nodes[-1].out0], name='output'))
     coder = ReversibleGraphNet(nodes)
     return coder
+'''
 
 def nf_fast_flow(input_dim):
     nodes = list()
 
     nodes.append(Ff.InputNode(input_dim[0],input_dim[1], input_dim[2], name='input'))
+    # I add blocks with 3x3 and 1x1 convolutions alternatively. Before them, I add a fixed permutation of the channels
     for k in range(c.n_coupling_blocks):
         nodes.append(Ff.Node(nodes[-1],
                              Fm.PermuteRandom,
@@ -69,16 +73,27 @@ class FastFlow(nn.Module):
     def __init__(self):
         super(FastFlow, self).__init__()
 
-        #self.feature_extractor = torch.hub.load('facebookresearch/deit:main', 'deit_base_distilled_patch16_224', pretrained=True)
-        #self.feature_extractor = torch.nn.Sequential(*(list(self.feature_extractor.children())[:-2])) # I remove the last two layers
+        if c.extractor_name == "resnet18":
+            #self.feature_extractor = torch.hub.load('facebookresearch/deit:main', 'deit_base_distilled_patch16_224', pretrained=True)
+            #self.feature_extractor = torch.nn.Sequential(*(list(self.feature_extractor.children())[:-2])) # I remove the last two layers
 
-        self.feature_extractor = models.resnet18()
-        self.feature_extractor = torch.nn.Sequential(*(list(self.feature_extractor.children())[:5]))
+            self.feature_extractor = models.resnet18()
+            # I take only the first blocks of the net, which has 64x64x64 as output
+            self.feature_extractor = torch.nn.Sequential(*(list(self.feature_extractor.children())[:5]))
 
-        print(summary(self.feature_extractor, (3,224,224)))
-        #self.feature_extractor = torch.load('./pretrained/M48_448.pth') #sbagliato, carica solo i pesi, non il modello
-        #self.feature_extractor.eval() # to deactivate the dropout layers
-        self.nf = nf_fast_flow((64,56,56))
+            print(summary(self.feature_extractor, (3,256,256)))
+            #self.feature_extractor = torch.load('./pretrained/M48_448.pth') #sbagliato, carica solo i pesi, non il modello
+            #self.feature_extractor.eval() # to deactivate the dropout layers
+
+            # This input is unfortunately hardcoded. See the output dimensions of resnet. Don't add the batch size (first number)
+            self.nf = nf_fast_flow((64,64,64))
+
+        elif c.extractor_name == "deit":
+            self.feature_extractor = torch.hub.load('facebookresearch/deit:main', 'deit_base_distilled_patch16_384', pretrained=True)
+            #print(help(self.feature_extractor ))
+            self.feature_extractor = torch.nn.Sequential(*(list(self.feature_extractor.children())[:-2])) # I remove the last two layers)
+            print(summary(self.feature_extractor, (3,384,384)))
+            self.nf = nf_fast_flow((24,24,768))
 
     def forward(self, x):
         y_cat = list()
@@ -93,7 +108,12 @@ class FastFlow(nn.Module):
         feat_s = self.feature_extractor(x)
         #y_cat.append(feat_s)
         #y = torch.cat(y_cat, dim=3)
-        #print(feat_s)
+        #print(feat_s.size())
+
+        # I have to reshaèe the linearized output of deit back to a 2D image
+        if c.extractor_name == "deit":
+            feat_s = feat_s.reshape(16,24,24,768)
+            #print(feat_s.size())
         z, log_jac_det = self.nf(feat_s)
         return z, log_jac_det
 

@@ -12,9 +12,10 @@ from utils import *
 import neptune.new as neptune
 import config as c
 
+# Neptune.ai set up, in order to keep track of your experiments
 if c.neptune_activate:
     run = neptune.init(
-        project="alegalluccio/differnet-test",
+        project="alegalluccio/FastFlow",
         api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiI2Y2IyYWYzOS0wZjI0LTRkNzAtODI1ZS00YTFkZjA1MWJjNzcifQ==",
     )  # your credentials
 
@@ -31,6 +32,7 @@ if c.neptune_activate:
     run["n_transforms_test"] = c.n_transforms_test
     run["dropout"] =c.dropout
     run["learning_rate"] = c.lr_init
+    run["subnet_conv_dim"]= c.subnet_conv_dim
 
 
 
