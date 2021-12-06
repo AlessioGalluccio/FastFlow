@@ -11,12 +11,13 @@ from utils import *
 
 import neptune.new as neptune
 import config as c
+import neptuneparams as nep_params
 
 # Neptune.ai set up, in order to keep track of your experiments
 if c.neptune_activate:
     run = neptune.init(
-        project="alegalluccio/FastFlow",
-        api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiI2Y2IyYWYzOS0wZjI0LTRkNzAtODI1ZS00YTFkZjA1MWJjNzcifQ==",
+        project = nep_params.project,
+        api_token = nep_params.api_token,
     )  # your credentials
 
     run["name_dataset"] = [c.dataset_path]

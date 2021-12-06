@@ -34,7 +34,7 @@ def get_fixed_transforms(degrees):
                                                                                             c.norm_std)]
     return transforms.Compose(tfs)
 
-
+#tensor to numpy
 def t2np(tensor):
     '''pytorch tensor -> numpy array'''
     return tensor.cpu().data.numpy() if tensor is not None else None

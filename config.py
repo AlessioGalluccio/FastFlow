@@ -35,8 +35,16 @@ n_coupling_blocks = 4
 #fc_internal = 2048 # number of neurons in hidden layers of s-t-networks
 dropout = 0.0 # dropout in s-t-networks
 lr_init = 2e-4
-#n_feat = 256 * n_scales # do not change except you change the feature extractor
 subnet_conv_dim = 128
+
+if(extractor_name == "resnet18"):
+    n_feat = 64*64*64*n_scales
+elif(extractor_name == "deit"):
+    n_feat = 24*24*768*n_scales
+else:
+    n_feat = 256 * n_scales # do not change except you change the feature extractor
+
+
 
 # dataloader parameters
 n_transforms = 4 # number of transformations per sample in training

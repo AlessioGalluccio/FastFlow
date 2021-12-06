@@ -77,21 +77,30 @@ class FastFlow(nn.Module):
             #self.feature_extractor = torch.hub.load('facebookresearch/deit:main', 'deit_base_distilled_patch16_224', pretrained=True)
             #self.feature_extractor = torch.nn.Sequential(*(list(self.feature_extractor.children())[:-2])) # I remove the last two layers
 
-            self.feature_extractor = models.resnet18()
+            self.feature_extractor = models.resnet18(pretrained=True)
             # I take only the first blocks of the net, which has 64x64x64 as output
             self.feature_extractor = torch.nn.Sequential(*(list(self.feature_extractor.children())[:5]))
+
+            # freeze the layers
+            for param in self.feature_extractor.parameters():
+                param.requires_grad = False
 
             print(summary(self.feature_extractor, (3,256,256)))
             #self.feature_extractor = torch.load('./pretrained/M48_448.pth') #sbagliato, carica solo i pesi, non il modello
             #self.feature_extractor.eval() # to deactivate the dropout layers
 
-            # This input is unfortunately hardcoded. See the output dimensions of resnet. Don't add the batch size (first number)
+            # This input is unfortunately hardcoded. See the output dimensions of the feature extractor.
+            # Don't add the batch size (first number)
             self.nf = nf_fast_flow((64,64,64))
 
         elif c.extractor_name == "deit":
             self.feature_extractor = torch.hub.load('facebookresearch/deit:main', 'deit_base_distilled_patch16_384', pretrained=True)
             #print(help(self.feature_extractor ))
-            self.feature_extractor = torch.nn.Sequential(*(list(self.feature_extractor.children())[:-2])) # I remove the last two layers)
+            # I remove the last two layers
+            self.feature_extractor = torch.nn.Sequential(*(list(self.feature_extractor.children())[:-2]))
+            # freeze the layers
+            for param in self.feature_extractor.parameters():
+                param.requires_grad = False
             print(summary(self.feature_extractor, (3,384,384)))
             self.nf = nf_fast_flow((24,24,768))
 
@@ -110,9 +119,11 @@ class FastFlow(nn.Module):
         #y = torch.cat(y_cat, dim=3)
         #print(feat_s.size())
 
-        # I have to reshaèe the linearized output of deit back to a 2D image
+        # I have to reshape the linearized output of deit back to a 2D image
+        # From (576,768) to (24,24,768). The first number is the batch size
         if c.extractor_name == "deit":
-            feat_s = feat_s.reshape(16,24,24,768)
+            dim_batch = feat_s.size(dim=0)
+            feat_s = feat_s.reshape(dim_batch,24,24,768)
             #print(feat_s.size())
         z, log_jac_det = self.nf(feat_s)
         return z, log_jac_det
