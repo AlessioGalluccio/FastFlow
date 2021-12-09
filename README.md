@@ -10,7 +10,7 @@ project="insert_name_of_neptune_project_here"
 api_token="inset_token_here
 ```
 These parameters are generated when you create a project on neptune, and you can find them there.
-If you are not interested in using neptune, you can comment the neptune code and import.
+If you are not interested in using neptune, you can comment the neptune code and the import statement in `train.py`.
 
 This project assumes that you have the mvtec dataset in the following path structure:
 ```

@@ -3,15 +3,14 @@ import torch
 from sklearn.metrics import roc_auc_score, average_precision_score
 from tqdm import tqdm
 
-import config as c
 from localization import export_gradient_maps
 from model import FastFlow, save_model, save_weights
 from utils import *
 
 
-import neptune.new as neptune
+import neptune.new as neptune # comment this statement if you don't use neptune
 import config as c
-import neptuneparams as nep_params
+import neptuneparams as nep_params # comment this statement if you don't use neptune
 
 # Neptune.ai set up, in order to keep track of your experiments
 if c.neptune_activate:

@@ -1,12 +1,14 @@
 '''This file configures the training procedure because handling arguments in every single function is so exhaustive for
 research purposes. Don't try this code if you are a software engineer.'''
+import torch
 
 # device settings
-#device = 'cuda' # or 'cpu'
+#'cuda' or 'cpu'
 device = 'cpu'
-import torch
-#torch.cuda.set_device(0)
-#
+
+if device == 'cuda':
+    torch.cuda.set_device(0)
+
 # neptune
 neptune_activate = False
 
@@ -24,7 +26,8 @@ transf_saturation = 0.0
 norm_mean, norm_std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
 
 # feature extractor
-extractor_name = "cait"
+# select "resnet18", "deit", or "cait"
+extractor_name = "deit"
 
 # network hyperparameters
 n_scales = 1 # number of scales at which features are extracted, img_size is the highest - others are //2, //4,...
@@ -33,7 +36,7 @@ n_coupling_blocks = 4
 #fc_internal = 2048 # number of neurons in hidden layers of s-t-networks
 dropout = 0.0 # dropout in s-t-networks
 lr_init = 2e-4
-subnet_conv_dim = 128
+subnet_conv_dim = 128 # internal dimension of the convolutional layera
 
 if(extractor_name == "resnet18"):
     n_feat = 64*64*64*n_scales
