@@ -4,8 +4,6 @@ from torch import nn
 from torchsummary import summary
 
 import config as c
-from freia_funcs import permute_layer, glow_coupling_layer, F_fully_connected, ReversibleGraphNet, OutputNode, \
-    InputNode, Node
 import FrEIA.modules as Fm
 import FrEIA.framework as Ff
 
@@ -26,20 +24,6 @@ def subnet_conv_3(c_in, c_out):
                          nn.ReLU(),
                          nn.Conv2d(c.subnet_conv_dim,  c_out, kernel_size=(3,3), padding='same'))
 
-'''
-def nf_head(input_dim=c.n_feat):
-    nodes = list()
-    nodes.append(InputNode(input_dim, name='input'))
-    for k in range(c.n_coupling_blocks):
-        nodes.append(Node([nodes[-1].out0], permute_layer, {'seed': k}, name=F'permute_{k}'))
-        nodes.append(Node([nodes[-1].out0], glow_coupling_layer,
-                          {'clamp': c.clamp_alpha, 'F_class': F_fully_connected,
-                           'F_args': {'internal_size': c.fc_internal, 'dropout': c.dropout}},
-                          name=F'fc_{k}'))
-    nodes.append(OutputNode([nodes[-1].out0], name='output'))
-    coder = ReversibleGraphNet(nodes)
-    return coder
-'''
 
 def nf_fast_flow(input_dim):
     nodes = list()
@@ -47,6 +31,7 @@ def nf_fast_flow(input_dim):
     nodes.append(Ff.InputNode(input_dim[0],input_dim[1], input_dim[2], name='input'))
     # I add blocks with 3x3 and 1x1 convolutions alternatively. Before them, I add a fixed permutation of the channels
     for k in range(c.n_coupling_blocks):
+        #TODO does it really permute only the channels?
         nodes.append(Ff.Node(nodes[-1],
                              Fm.PermuteRandom,
                              {'seed':k},
@@ -85,7 +70,7 @@ class FastFlow(nn.Module):
             for param in self.feature_extractor.parameters():
                 param.requires_grad = False
 
-            print(summary(self.feature_extractor, (3,256,256)))
+            print(summary(self.feature_extractor, (3,256,256), device=c.device))
             #self.feature_extractor = torch.load('./pretrained/M48_448.pth') #sbagliato, carica solo i pesi, non il modello
             #self.feature_extractor.eval() # to deactivate the dropout layers
 
@@ -101,23 +86,23 @@ class FastFlow(nn.Module):
             # freeze the layers
             for param in self.feature_extractor.parameters():
                 param.requires_grad = False
-            print(summary(self.feature_extractor, (3,384,384)))
+            #print(summary(self.feature_extractor, (3,384,384)))
             self.nf = nf_fast_flow((24,24,768))
 
-    def forward(self, x):
-        y_cat = list()
+        elif c.extractor_name == "cait":
+            self.feature_extractor = torch.hub.load('facebookresearch/deit:main', 'cait_M48', pretrained=True)
+            #print(help(self.feature_extractor ))
+            #self.feature_extractor = torch.nn.Sequential(*list(self.feature_extractor.modules())[:2])
 
-        '''
-        for s in range(c.n_scales):
-            x_scaled = F.interpolate(x, size=c.img_size[0] // (2 ** s)) if s > 0 else x
-            #feat_s = self.feature_extractor.features(x_scaled)
-            feat_s = self.feature_extractor(x_scaled)
-            y_cat.append(torch.mean(feat_s, dim=(2, 3)))
-        '''
+            # freeze the layers
+            for param in self.feature_extractor.parameters():
+                param.requires_grad = False
+
+            print(summary(self.feature_extractor, (3,448,448)))
+            self.nf = nf_fast_flow((28,28,768))
+
+    def forward(self, x):
         feat_s = self.feature_extractor(x)
-        #y_cat.append(feat_s)
-        #y = torch.cat(y_cat, dim=3)
-        #print(feat_s.size())
 
         # I have to reshape the linearized output of deit back to a 2D image
         # From (576,768) to (24,24,768). The first number is the batch size
@@ -125,6 +110,12 @@ class FastFlow(nn.Module):
             dim_batch = feat_s.size(dim=0)
             feat_s = feat_s.reshape(dim_batch,24,24,768)
             #print(feat_s.size())
+
+        # I have to reshape the linearized output of cait back to a 2D image
+        if c.extractor_name == "cait":
+            dim_batch = feat_s.size(dim=0)
+            feat_s = feat_s.reshape(dim_batch,28,28,768)
+
         z, log_jac_det = self.nf(feat_s)
         return z, log_jac_det
 

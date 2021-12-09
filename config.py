@@ -15,8 +15,6 @@ dataset_path = "dummy_dataset"
 class_name = "dummy_class"
 modelname = "hazelnut_test"
 
-img_size = (384, 384)
-img_dims = [3] + list(img_size)
 
 # transformation settings
 transf_rotations = True
@@ -26,7 +24,7 @@ transf_saturation = 0.0
 norm_mean, norm_std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
 
 # feature extractor
-extractor_name = "deit"
+extractor_name = "cait"
 
 # network hyperparameters
 n_scales = 1 # number of scales at which features are extracted, img_size is the highest - others are //2, //4,...
@@ -39,12 +37,18 @@ subnet_conv_dim = 128
 
 if(extractor_name == "resnet18"):
     n_feat = 64*64*64*n_scales
+    img_size = (256, 256)
 elif(extractor_name == "deit"):
     n_feat = 24*24*768*n_scales
+    img_size = (384, 384)
+elif(extractor_name == "cait"):
+    n_feat = 28*28*768*n_scales
+    img_size = (448, 448)
 else:
     n_feat = 256 * n_scales # do not change except you change the feature extractor
+    img_size = (448, 448)
 
-
+img_dims = [3] + list(img_size)
 
 # dataloader parameters
 n_transforms = 4 # number of transformations per sample in training
