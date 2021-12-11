@@ -48,9 +48,9 @@ def nf_fast_flow(input_dim):
                                  name=F'conv_high_res_{k}'))
 
     nodes.append(Ff.OutputNode(nodes[-1], name='output'))
-    print(nodes)
+    #print(nodes)
     coder = Ff.GraphINN(nodes)
-    print(coder)
+    #print(coder)
     return coder
 
 
@@ -70,6 +70,7 @@ class FastFlow(nn.Module):
             for param in self.feature_extractor.parameters():
                 param.requires_grad = False
 
+            self.feature_extractor.to(c.device)
             print(summary(self.feature_extractor, (3,256,256), device=c.device))
             #self.feature_extractor = torch.load('./pretrained/M48_448.pth') #sbagliato, carica solo i pesi, non il modello
             #self.feature_extractor.eval() # to deactivate the dropout layers
@@ -83,6 +84,7 @@ class FastFlow(nn.Module):
             #print(help(self.feature_extractor ))
             # I remove the last two layers
             self.feature_extractor = torch.nn.Sequential(*(list(self.feature_extractor.children())[:-2]))
+            self.feature_extractor.to(c.device)
             # freeze the layers
             for param in self.feature_extractor.parameters():
                 param.requires_grad = False
@@ -91,12 +93,23 @@ class FastFlow(nn.Module):
 
         elif c.extractor_name == "cait":
             self.feature_extractor = torch.hub.load('facebookresearch/deit:main', 'cait_M48', pretrained=True)
-            #print(help(self.feature_extractor ))
-            #self.feature_extractor = torch.nn.Sequential(*list(self.feature_extractor.modules())[:2])
+            self.feature_extractor.to(c.device)
+
+            # how to print the first 5 Layerscale blocks (input layers are not included
+            print(list(list(self.feature_extractor.children())[2].children())[:5])
+
+            # this network has a gigantic children called ModuleList, that's why we can't use only children() method to split the network
+            # ModuleList contains many Layerscale blocks. We want to select only the first 20 ones
+            # ModuleList content can be viewed in list(self.feature_extractor.children())[2]
+            self.feature_extractor = torch.nn.Sequential(*list(self.feature_extractor.children())[:2],
+                                                         *list(list(self.feature_extractor.children())[2].children())[:20])
+
 
             # freeze the layers
             for param in self.feature_extractor.parameters():
                 param.requires_grad = False
+
+
 
             print(summary(self.feature_extractor, (3,448,448)))
             self.nf = nf_fast_flow((28,28,768))

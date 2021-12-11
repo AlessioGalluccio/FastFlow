@@ -27,7 +27,7 @@ norm_mean, norm_std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
 
 # feature extractor
 # select "resnet18", "deit", or "cait"
-extractor_name = "deit"
+extractor_name = "cait"
 
 # network hyperparameters
 n_scales = 1 # number of scales at which features are extracted, img_size is the highest - others are //2, //4,...
