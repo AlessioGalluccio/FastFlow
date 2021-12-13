@@ -31,20 +31,20 @@ def nf_fast_flow(input_dim):
     nodes.append(Ff.InputNode(input_dim[0],input_dim[1], input_dim[2], name='input'))
     # I add blocks with 3x3 and 1x1 convolutions alternatively. Before them, I add a fixed permutation of the channels
     for k in range(c.n_coupling_blocks):
-        #TODO does it really permute only the channels?
+        # It permutes the first dimension, the channels
         nodes.append(Ff.Node(nodes[-1],
                              Fm.PermuteRandom,
                              {'seed':k},
                              name=F'permute_high_res_{k}'))
-        if k % 2 == 0:
+        if k % 2 == 0 or c.only_3x3_convolution:
             nodes.append(Ff.Node(nodes[-1],
                                  Fm.GLOWCouplingBlock,
-                                 {'subnet_constructor':subnet_conv_3, 'clamp':1.2},
+                                 {'subnet_constructor':subnet_conv_3, 'clamp':c.clamp},
                                  name=F'conv_high_res_{k}'))
         else:
             nodes.append(Ff.Node(nodes[-1],
                                  Fm.GLOWCouplingBlock,
-                                 {'subnet_constructor':subnet_conv_1, 'clamp':1.2},
+                                 {'subnet_constructor':subnet_conv_1, 'clamp':c.clamp},
                                  name=F'conv_high_res_{k}'))
 
     nodes.append(Ff.OutputNode(nodes[-1], name='output'))
@@ -59,9 +59,6 @@ class FastFlow(nn.Module):
         super(FastFlow, self).__init__()
 
         if c.extractor_name == "resnet18":
-            #self.feature_extractor = torch.hub.load('facebookresearch/deit:main', 'deit_base_distilled_patch16_224', pretrained=True)
-            #self.feature_extractor = torch.nn.Sequential(*(list(self.feature_extractor.children())[:-2])) # I remove the last two layers
-
             self.feature_extractor = models.resnet18(pretrained=True)
             # I take only the first blocks of the net, which has 64x64x64 as output
             self.feature_extractor = torch.nn.Sequential(*(list(self.feature_extractor.children())[:5]))
@@ -81,14 +78,14 @@ class FastFlow(nn.Module):
 
         elif c.extractor_name == "deit":
             self.feature_extractor = torch.hub.load('facebookresearch/deit:main', 'deit_base_distilled_patch16_384', pretrained=True)
-            #print(help(self.feature_extractor ))
-            # I remove the last two layers
-            self.feature_extractor = torch.nn.Sequential(*(list(self.feature_extractor.children())[:-2]))
+            # I select the input layers and the first 7 blocks
+            self.feature_extractor = torch.nn.Sequential(*list(self.feature_extractor.children())[:2],
+                                                         *list(list(self.feature_extractor.children())[2].children())[:7])
             self.feature_extractor.to(c.device)
             # freeze the layers
             for param in self.feature_extractor.parameters():
                 param.requires_grad = False
-            #print(summary(self.feature_extractor, (3,384,384)))
+            print(summary(self.feature_extractor, (3,384,384)))
             self.nf = nf_fast_flow((24,24,768))
 
         elif c.extractor_name == "cait":
@@ -128,6 +125,8 @@ class FastFlow(nn.Module):
         if c.extractor_name == "cait":
             dim_batch = feat_s.size(dim=0)
             feat_s = feat_s.reshape(dim_batch,28,28,768)
+
+        # Resnet doesn't need reshape
 
         z, log_jac_det = self.nf(feat_s)
         return z, log_jac_det

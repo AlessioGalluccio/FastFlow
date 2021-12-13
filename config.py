@@ -27,16 +27,18 @@ norm_mean, norm_std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
 
 # feature extractor
 # select "resnet18", "deit", or "cait"
-extractor_name = "cait"
+extractor_name = "deit"
 
 # network hyperparameters
 n_scales = 1 # number of scales at which features are extracted, img_size is the highest - others are //2, //4,...
 clamp_alpha = 3 # see paper (differnet) equation 2 for explanation
+clamp = 1.2 # clamp in convolutional layers
 n_coupling_blocks = 4
 #fc_internal = 2048 # number of neurons in hidden layers of s-t-networks
 dropout = 0.0 # dropout in s-t-networks
 lr_init = 2e-4
 subnet_conv_dim = 128 # internal dimension of the convolutional layera
+only_3x3_convolution = False # set all convolutional layers to have 3x3 convolutions
 
 if(extractor_name == "resnet18"):
     n_feat = 64*64*64*n_scales
