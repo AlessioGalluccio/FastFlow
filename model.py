@@ -87,7 +87,7 @@ class FastFlow(nn.Module):
             # freeze the layers
             for param in self.feature_extractor.parameters():
                 param.requires_grad = False
-            print(summary(self.feature_extractor, (3,384,384)))
+            print(summary(self.feature_extractor, (3,384,384), device=c.device))
             self.nf = nf_fast_flow((24,24,768))
 
         elif c.extractor_name == "cait":
@@ -110,7 +110,7 @@ class FastFlow(nn.Module):
 
 
 
-            print(summary(self.feature_extractor, (3,448,448)))
+            print(summary(self.feature_extractor, (3,448,448), device=c.device))
             self.nf = nf_fast_flow((28,28,768))
 
     def forward(self, x):
