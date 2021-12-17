@@ -32,19 +32,21 @@ def nf_fast_flow(input_dim):
     # I add blocks with 3x3 and 1x1 convolutions alternatively. Before them, I add a fixed permutation of the channels
     for k in range(c.n_coupling_blocks):
         # It permutes the first dimension, the channels
+        '''
         nodes.append(Ff.Node(nodes[-1],
                              Fm.PermuteRandom,
                              {'seed':k},
                              name=F'permute_high_res_{k}'))
+        '''
         if k % 2 == 0 or c.only_3x3_convolution:
             nodes.append(Ff.Node(nodes[-1],
-                                 Fm.GLOWCouplingBlock,
-                                 {'subnet_constructor':subnet_conv_3, 'clamp':c.clamp},
+                                 Fm.AllInOneBlock,
+                                 {'subnet_constructor':subnet_conv_3, 'affine_clamping':c.clamp},
                                  name=F'conv_high_res_{k}'))
         else:
             nodes.append(Ff.Node(nodes[-1],
-                                 Fm.GLOWCouplingBlock,
-                                 {'subnet_constructor':subnet_conv_1, 'clamp':c.clamp},
+                                 Fm.AllInOneBlock,
+                                 {'subnet_constructor':subnet_conv_1, 'affine_clamping':c.clamp},
                                  name=F'conv_high_res_{k}'))
 
     nodes.append(Ff.OutputNode(nodes[-1], name='output'))
