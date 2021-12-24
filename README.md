@@ -9,7 +9,7 @@ Python version required >= 3.8
 If you use neptune, create a file named `neptuneparams.py` and insert this code
 ```
 project="insert_name_of_neptune_project_here"
-api_token="inset_token_here
+api_token="inset_token_here"
 ```
 These parameters are generated when you create a project on neptune, and you can find them there.
 If you are not interested in using neptune, you can comment the neptune code and the import statement in `train.py`.
