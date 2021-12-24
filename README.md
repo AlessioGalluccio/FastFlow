@@ -4,7 +4,7 @@ Attention!: This repo is not ready! Work in progress🚧
 An unofficial implementation of the architecture of FastFlow [(Jiawei Yu et al.)](https://arxiv.org/pdf/2111.07677v2.pdf).
 Starting from [this](https://github.com/marco-rudolph/differnet) implementation of Differnet of Marco Rudolph, I'm trying to create an easy to use implementation of FastFlow.
 
-Python version required >= 3.8
+Python version >= 3.8
 
 If you use neptune, create a file named `neptuneparams.py` and insert this code
 ```
