@@ -40,8 +40,8 @@ def export_gradient_maps(model, testloader, optimizer, n_batches=1):
         inputs, labels = preprocess_batch(data)
         inputs = Variable(inputs, requires_grad=True)
 
-        emb = model(inputs)
-        loss = get_loss(emb, model.nf.jacobian(run_forward=False))
+        emb, log_jac_det = model(inputs)
+        loss = get_loss(emb, log_jac_det)
         loss.backward()
 
         grad = inputs.grad.view(-1, c.n_transforms_test, *inputs.shape[-3:])
