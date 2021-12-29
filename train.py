@@ -150,6 +150,6 @@ def train(train_loader, test_loader):
 
     if c.save_model:
         model.to('cpu')
-        save_model(model, c.modelname)
+        save_model(model.state_dict(), c.modelname)
         save_weights(model, c.modelname)
     return model

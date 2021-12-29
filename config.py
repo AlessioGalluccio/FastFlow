@@ -15,7 +15,7 @@ neptune_activate = False
 # data settings
 dataset_path = "dummy_dataset"
 class_name = "dummy_class"
-modelname = "hazelnut_test"
+modelname = "dummy_test"
 
 
 # transformation settings
