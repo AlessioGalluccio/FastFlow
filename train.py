@@ -134,7 +134,7 @@ def train(train_loader, test_loader):
 
         test_labels = np.concatenate(test_labels)
         is_anomaly = np.array([0 if l == 0 else 1 for l in test_labels])
-        z_grouped = torch.cat(test_z, dim=0).view(-1, c.n_transforms_test, c.n_feat)
+        #z_grouped = torch.cat(test_z, dim=0).view(-1, c.n_transforms_test, c.n_feat)
         #anomaly_score = t2np(torch.mean(z_grouped ** 2, dim=(-2, -1)))
         score_obs_auroc.update(roc_auc_score(is_anomaly, anomaly_score), epoch,
                          print_score=c.verbose or epoch == c.meta_epochs - 1)
