@@ -101,6 +101,7 @@ def train(train_loader, test_loader):
         test_loss = list()
         test_z = list()
         test_labels = list()
+        anomaly_score = list()
         with torch.no_grad():
             for i, data in enumerate(tqdm(test_loader, disable=c.hide_tqdm_bar)):
                 inputs, labels = preprocess_batch(data)
@@ -110,6 +111,12 @@ def train(train_loader, test_loader):
                 test_z.append(z)
                 test_loss.append(t2np(loss))
                 test_labels.append(t2np(labels))
+
+                #I compute the values of anomaly score here in order to use less GPU memory
+                z_grouped_temp = z.view(-1, c.n_transforms_test, c.n_feat)
+                anomaly_score.append(t2np(torch.mean(z_grouped_temp ** 2, dim=(-2, -1))))
+
+
 
         test_loss_good = list()
         test_loss_defective = list()
@@ -128,7 +135,7 @@ def train(train_loader, test_loader):
         test_labels = np.concatenate(test_labels)
         is_anomaly = np.array([0 if l == 0 else 1 for l in test_labels])
         z_grouped = torch.cat(test_z, dim=0).view(-1, c.n_transforms_test, c.n_feat)
-        anomaly_score = t2np(torch.mean(z_grouped ** 2, dim=(-2, -1)))
+        #anomaly_score = t2np(torch.mean(z_grouped ** 2, dim=(-2, -1)))
         score_obs_auroc.update(roc_auc_score(is_anomaly, anomaly_score), epoch,
                          print_score=c.verbose or epoch == c.meta_epochs - 1)
         score_obs_aucpr.update(average_precision_score(is_anomaly, anomaly_score), epoch,
