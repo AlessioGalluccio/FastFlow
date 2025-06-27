@@ -1,24 +1,50 @@
-Attention!: This repo is not ready! Work in progress🚧
 # FastFlow
 
-An unofficial implementation of the architecture of FastFlow [(Jiawei Yu et al.)](https://arxiv.org/pdf/2111.07677v2.pdf).
-Starting from [this](https://github.com/marco-rudolph/differnet) implementation of Differnet by Marco Rudolph, I'm trying to create an easy to use implementation of FastFlow.
+An unofficial implementation of the FastFlow architecture by Jiawei Yu et al. This implementation builds upon the [DifferNet implementation by Marco Rudolph](https://github.com/marco-rudolph/differnet) to provide an easy-to-use FastFlow implementation.
 
-Python version >= 3.8
+## Requirements
 
-If you use neptune, create a file named `neptuneparams.py` and insert this code
-```
-project="insert_name_of_neptune_project_here"
-api_token="inset_token_here"
-```
-These parameters are generated when you create a project on neptune, and you can find them there.
-If you are not interested in using neptune, you can comment the neptune code and the import statement in `train.py`.
+- Python >= 3.8
 
-This project assumes that you have the mvtec dataset in the following path structure:
+## Setup
+
+### Neptune Integration (Optional)
+
+If you want to use Neptune for experiment tracking:
+
+1. Create a file named `neptuneparams.py` in the root directory
+2. Add the following content:
+
+```python
+project = "insert_name_of_neptune_project_here"
+api_token = "insert_token_here"
 ```
-- data:
-    - mvtec:
-        - hazelnut
-        - toothbush
-        - ...
+
+> **Note:** These parameters are generated when you create a project on Neptune. You can find them in your Neptune project dashboard.
+
+If you don't want to use Neptune, simply comment out the Neptune-related code and import statements in `train.py`.
+
+### Dataset Structure
+
+This project expects the MVTec dataset to be organized in the following directory structure:
+
 ```
+data/
+└── mvtec/
+    ├── hazelnut/
+    ├── toothbrush/
+    └── [other_categories]/
+```
+
+## Usage
+
+*Usage instructions will be added as development progresses.*
+
+## Contributing
+
+This project is currently under active development. Contributions and feedback are welcome!
+
+## References
+
+- Original FastFlow paper: [FastFlow: Unsupervised Anomaly Detection and Localization via 2D Normalizing Flows](https://arxiv.org/abs/2111.07677) by Jiawei Yu et al.
+- Based on DifferNet implementation by Marco Rudolph
